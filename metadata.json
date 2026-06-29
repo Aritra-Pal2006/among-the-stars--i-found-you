@@ -1,0 +1,6 @@
+{
+  "name": "Among The Stars, I Found You",
+  "description": "A cinematic interactive birthday experience for a girlfriend, telling our story written among the stars.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
