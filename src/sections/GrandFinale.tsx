@@ -26,12 +26,19 @@ export default function GrandFinale() {
     try {
       const response = await fetch(`https://formspree.io/f/${FORMSPREE_FORM_ID}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wish: wish.trim() }),
+        headers: { "Accept": "application/json" },
+        body: new URLSearchParams({ wish: wish.trim() }),
       });
 
-      if (!response.ok) throw new Error("Failed to send wish");
-    } catch {
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error("Formspree returned non-JSON. Your form may not be activated yet — check your email and confirm the form.");
+      }
+      if (!result.ok) throw new Error(result.error || "Form rejected");
+    } catch (err) {
+      console.error("Formspree error:", err);
       setSubmitError(true);
       setIsSubmitting(false);
       return;
@@ -181,7 +188,7 @@ export default function GrandFinale() {
                         animate={{ opacity: 1 }}
                         className="text-red-400/80 text-xs font-sans text-center"
                       >
-                        Could not send wish. Check your Formspree form ID.
+                        Could not send wish. Check the browser console (F12) for details, and make sure you confirmed the Formspree form via email.
                       </motion.p>
                     )}
 
