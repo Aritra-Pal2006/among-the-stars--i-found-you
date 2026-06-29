@@ -1,20 +1,43 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Heart, Send, CheckCircle2 } from "lucide-react";
+import { Sparkles, Heart, Send, CheckCircle2, Loader2 } from "lucide-react";
 import CosmicScene from "../components/CosmicScene";
 import eternalSkyImage from "@assets/photos/mybubu.jpg";
 
+const FORMSPREE_FORM_ID = "mzdlvkvk";
+
 export default function GrandFinale() {
   const [wish, setWish] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [starsShower, setStarsShower] = useState<Array<{ id: number; x: number; y: number; size: number; delay: number }>>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Trigger custom magical full-screen stardust rain once the wish is launched!
-  const handleSubmitWish = (e: FormEvent) => {
+  const handleSubmitWish = async (e: FormEvent) => {
     e.preventDefault();
     if (!wish.trim()) return;
 
+    setIsSubmitting(true);
+    setSubmitError(false);
+
+    // Send wish to Formspree
+    try {
+      const response = await fetch(`https://formspree.io/f/${FORMSPREE_FORM_ID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wish: wish.trim() }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send wish");
+    } catch {
+      setSubmitError(true);
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(false);
     setIsSubmitted(true);
 
     // Generate beautiful starry trail nodes
@@ -152,12 +175,32 @@ export default function GrandFinale() {
                       />
                     </div>
 
+                    {submitError && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-red-400/80 text-xs font-sans text-center"
+                      >
+                        Could not send wish. Check your Formspree form ID.
+                      </motion.p>
+                    )}
+
                     <button
                       type="submit"
-                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-sans text-xs uppercase tracking-widest font-semibold shadow-lg shadow-primary/10 hover:shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                      disabled={isSubmitting}
+                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white font-sans text-xs uppercase tracking-widest font-semibold shadow-lg shadow-primary/10 hover:shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all duration-300 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Release to the Universe
-                      <Send className="w-4 h-4" />
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Release to the Universe
+                          <Send className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   </form>
                 </motion.div>
@@ -190,6 +233,7 @@ export default function GrandFinale() {
                       onClick={() => {
                         setWish("");
                         setIsSubmitted(false);
+                        setSubmitError(false);
                       }}
                       className="px-4 py-1.5 rounded-full border border-white/10 hover:bg-white/5 text-[10px] tracking-widest text-zinc-400 hover:text-white uppercase font-bold cursor-pointer transition-colors font-sans"
                     >
